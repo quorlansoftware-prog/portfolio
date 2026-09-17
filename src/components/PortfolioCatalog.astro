@@ -1,0 +1,206 @@
+---
+import siteConfig from '../content/site.json';
+
+interface Props {
+  locale?: 'es' | 'en';
+}
+
+const { locale = 'es' } = Astro.props;
+const source = siteConfig.site.catalog;
+const catalog = { ...source, ...(source.translations?.[locale] ?? {}) };
+const cards = source.cards.map((card) => ({ ...card, ...(card.translations?.[locale] ?? {}) }));
+const teamSource = siteConfig.site.team;
+const team = {
+  ...teamSource,
+  ...(teamSource.translations?.[locale] ?? {}),
+  members: teamSource.members.map((member) => ({ ...member, ...(member.translations?.[locale] ?? {}) })),
+};
+const members = team.members;
+const languageHref = `${import.meta.env.BASE_URL}${locale === 'en' ? '' : 'en/'}`;
+const pageUrl = (card) => card.externalHref ?? `${import.meta.env.BASE_URL}${locale === 'en' ? 'en/' : ''}${siteConfig.pages.find((page) => page.id === card.pageId)?.path ?? ''}`;
+const isEnglish = locale === 'en';
+const workingMediaCopy = isEnglish
+  ? { label: 'BOOKING BOT', incoming: 'What day works for you?', outgoing: 'Tomorrow at 18:30' }
+  : { label: 'BOT / RESERVAS', incoming: '¿Qué día te viene bien?', outgoing: 'Mañana a las 18:30' };
+---
+
+<header class="catalog-header">
+  <div class="topline">
+    <span>QS / 2026</span>
+    <span class="topline__topic">{isEnglish ? 'Web design & development' : 'Diseño y desarrollo web'}</span>
+    <div class="topline__actions">
+      <a href="#equipo">{isEnglish ? 'Team' : 'Equipo'}</a>
+      <a href={languageHref} lang={isEnglish ? 'es' : 'en'}>{isEnglish ? 'ES' : 'EN'}</a>
+    </div>
+  </div>
+  <div class="masthead">
+    <div>
+      <p class="eyebrow">{isEnglish ? 'Templates that sell services' : 'Plantillas que venden servicios'}</p>
+      <h1>{catalog.title}<span>®</span></h1>
+    </div>
+    <p class="intro">{catalog.description}</p>
+  </div>
+</header>
+
+<main aria-label={isEnglish ? 'Portfolio demos' : 'Demos del portfolio'}>
+  <section class="catalog-grid" aria-label={isEnglish ? 'Selected projects' : 'Proyectos seleccionados'}>
+    {cards.map((card, index) => <article class:list={['catalog-card', `card-${card.theme}`, { 'catalog-card--featured': card.featured, 'catalog-card--working': card.status === 'working' }]}>
+      {card.status === 'working' ? (
+        <div class="catalog-card__surface" aria-disabled="true">
+          <div class="card-media card-media--working">
+            <div class="working-media" aria-hidden="true">
+              <span class="working-media__label">{workingMediaCopy.label}</span>
+              <span class="working-media__bubble working-media__bubble--incoming">{workingMediaCopy.incoming}</span>
+              <span class="working-media__bubble working-media__bubble--outgoing">{workingMediaCopy.outgoing}</span>
+              <span class="working-media__cursor"></span>
+            </div>
+            <span class="card-index">{String(index + 1).padStart(2, '0')}</span>
+            <span class="card-badge">{card.badge}</span>
+          </div>
+          <div class="card-body">
+            <p class="card-sector">{card.sector}</p>
+            <div class="card-title-row"><h2>{card.title}</h2><span aria-hidden="true">—</span></div>
+            <p class="card-description">{card.description}</p>
+            <span class="card-cta">{card.button}</span>
+          </div>
+        </div>
+      ) : (
+        <a class="catalog-card__surface" href={pageUrl(card)} target={card.externalHref ? '_blank' : undefined} rel={card.externalHref ? 'noreferrer' : undefined}>
+          <div class="card-media">
+            <img src={`${import.meta.env.BASE_URL}${card.image}`} alt={card.alt} loading={index ? 'lazy' : 'eager'} />
+            <span class="card-index">{String(index + 1).padStart(2, '0')}</span>
+            <span class="card-badge">{card.badge}</span>
+          </div>
+          <div class="card-body">
+            <p class="card-sector">{card.sector}</p>
+            <div class="card-title-row"><h2>{card.title}</h2><span aria-hidden="true">↗</span></div>
+            <p class="card-description">{card.description}</p>
+            <span class="card-cta">{card.button}</span>
+          </div>
+        </a>
+      )}
+    </article>)}
+  </section>
+
+  <section id="equipo" class="team-section" aria-labelledby="team-title">
+    <div class="team-heading">
+      <div>
+        <p class="eyebrow">{team.eyebrow}</p>
+        <h2 id="team-title">{team.title}</h2>
+      </div>
+      <p>{team.description}</p>
+    </div>
+    <div class="team-grid">
+      {members.map((member) => <article class="team-card">
+        <div class="team-card__topline"><span class="team-initials" aria-hidden="true">{member.initials}</span><span class="team-card__number">/ 0{member.id === 'alvaro' ? '1' : '2'}</span></div>
+        <div class="team-card__body">
+          <p class="team-role">{member.role}</p>
+          <h3>{member.name}</h3>
+          <p class="team-description">{member.description}</p>
+          <div class="team-links">
+            <a href={member.linkedin} target="_blank" rel="noreferrer">LinkedIn <span aria-hidden="true">↗</span></a>
+            {member.portfolio && <a href={member.portfolio} target="_blank" rel="noreferrer">{isEnglish ? 'Portfolio' : 'Portfolio personal'} <span aria-hidden="true">↗</span></a>}
+          </div>
+        </div>
+      </article>)}
+    </div>
+  </section>
+</main>
+
+<footer><span>{catalog.watermark}</span><span>{isEnglish ? 'Made for businesses with something to say.' : 'Hecho para negocios con algo que decir.'}</span></footer>
+
+<style>
+  :global(*) { box-sizing: border-box; }
+  :global(body) { margin: 0; min-width: 320px; color: #f7f4ef; background: #101112; font-family: "DM Sans", system-ui, sans-serif; }
+  :global(a) { color: inherit; }
+  .catalog-header, .catalog-grid, .team-section, footer { width: min(1240px, calc(100% - 48px)); margin: 0 auto; }
+  .catalog-header { padding: 28px 0 90px; }
+  .topline { display: flex; justify-content: space-between; align-items: center; gap: 20px; color: #858a8d; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; }
+  .topline__actions { display: flex; gap: 18px; }
+  .topline a { color: #f7f4ef; text-decoration: none; transition: color .25s ease; }
+  .topline a:hover, .topline a:focus-visible { color: #c87945; }
+  .masthead { display: grid; grid-template-columns: 1.2fr .8fr; gap: 48px; align-items: end; margin-top: clamp(80px, 15vw, 190px); }
+  .eyebrow, .card-sector, .team-role { color: #c87945; font-size: .72rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+  .eyebrow { margin: 0 0 18px; }
+  h1 { max-width: 800px; margin: 0; font: 600 clamp(4.5rem, 13vw, 11rem)/.8 "Space Grotesk", sans-serif; letter-spacing: -.1em; }
+  h1 span { color: #c87945; font-size: .25em; letter-spacing: 0; vertical-align: top; }
+  .intro { max-width: 300px; margin: 0 0 5px; color: #a9abad; font-size: 1.05rem; line-height: 1.4; }
+  .catalog-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; padding-bottom: 118px; }
+  .catalog-card { display: flex; grid-column: span 6; min-height: 560px; overflow: hidden; background: #191b1d; border: 1px solid #2a2d30; transition: transform .5s cubic-bezier(.16,1,.3,1), border-color .3s; }
+  .catalog-card--featured { grid-column: 3 / span 8; }
+  .catalog-card__surface { display: flex; width: 100%; flex: 1; flex-direction: column; color: inherit; text-decoration: none; }
+  .catalog-card:not(.catalog-card--working):hover, .catalog-card:not(.catalog-card--working):focus-within { transform: translateY(-8px); border-color: #73777b; }
+  .catalog-card--working { background: #1b1d1f; border-color: #35383c; }
+  .catalog-card--working .catalog-card__surface { color: #b1b3b5; }
+  .card-media { position: relative; height: 320px; overflow: hidden; background: #272a2c; }
+  .card-media::after { position: absolute; inset: 0; content: ""; background: linear-gradient(180deg, transparent 55%, rgba(16,17,18,.6)); }
+  .card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.16,1,.3,1); }
+  .catalog-card:not(.catalog-card--working):hover .card-media img { transform: scale(1.04); }
+  .card-media--working { background: #272a2c; }
+  .card-media--working::after { background: linear-gradient(180deg, transparent 30%, rgba(16,17,18,.7)); }
+  .working-media { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 42px clamp(24px, 8vw, 92px); color: #868a8d; background: repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 1px, transparent 1px 12px); }
+  .working-media__label { align-self: flex-start; color: #a9abad; font-size: .68rem; font-weight: 700; letter-spacing: .16em; }
+  .working-media__bubble { width: fit-content; max-width: 92%; padding: 12px 16px; border: 1px solid #4b4f53; border-radius: 2px 12px 12px 12px; color: #d2d4d6; background: #303438; font-size: .78rem; line-height: 1.4; }
+  .working-media__bubble--outgoing { align-self: flex-end; border-radius: 12px 2px 12px 12px; color: #151719; background: #888d91; }
+  .working-media__cursor { width: 28px; height: 4px; margin-left: 3px; background: #74797d; animation: blink 1.2s steps(2, start) infinite; }
+  .card-index { position: absolute; z-index: 1; top: 18px; left: 20px; color: #fff; font: 600 1.1rem "Space Grotesk", sans-serif; }
+  .card-badge { position: absolute; z-index: 1; top: 18px; right: 20px; padding: 7px 9px; border: 1px solid rgba(255,255,255,.34); color: #f5f5f5; background: rgba(16,17,18,.38); font-size: .62rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .catalog-card--working .card-badge { border-color: #777c80; color: #c6c8ca; background: rgba(16,17,18,.6); }
+  .card-body { display: flex; flex: 1; flex-direction: column; padding: 26px 28px 30px; }
+  .card-sector { margin: 0 0 22px; color: #c87945; }
+  .card-title-row { display: flex; justify-content: space-between; gap: 15px; align-items: start; }
+  .card-title-row h2 { margin: 0; font: 500 clamp(2.3rem, 5vw, 4.6rem)/.86 "Space Grotesk", sans-serif; letter-spacing: -.08em; }
+  .card-title-row span { color: #c87945; font-size: 2rem; transition: transform .3s; }
+  .catalog-card:not(.catalog-card--working):hover .card-title-row span { transform: translate(4px, -4px); }
+  .card-description { max-width: 500px; margin: 24px 0; color: #a9abad; line-height: 1.5; }
+  .card-cta { margin-top: auto; padding-top: 20px; border-top: 1px solid #303337; color: #f7f4ef; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .catalog-card--working .card-sector, .catalog-card--working .card-title-row span, .catalog-card--working .card-cta { color: #9a9ea2; }
+  .card-pure .card-sector, .card-pure .card-title-row span { color: #c9827b; }
+  .card-forma .card-sector, .card-forma .card-title-row span { color: #cbf34a; }
+  .card-reformas .card-sector, .card-reformas .card-title-row span { color: #54b8a9; }
+  .card-reformas .card-media img { object-position: center 58%; }
+  .card-miga .card-sector, .card-miga .card-title-row span { color: #e63324; }
+  .team-section { padding: 0 0 120px; }
+  .team-heading { display: grid; grid-template-columns: 1.2fr .8fr; gap: 48px; align-items: end; padding: 30px 0 38px; border-top: 1px solid #2a2d30; }
+  .team-heading h2 { max-width: 720px; margin: 0; font: 500 clamp(2.8rem, 7vw, 6.5rem)/.86 "Space Grotesk", sans-serif; letter-spacing: -.08em; }
+  .team-heading > p { max-width: 320px; margin: 0 0 4px; color: #a9abad; line-height: 1.5; }
+  .team-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; }
+  .team-card { min-height: 390px; padding: 24px 28px 28px; border: 1px solid #2a2d30; background: #151719; }
+  .team-card__topline { display: flex; justify-content: space-between; align-items: start; color: #858a8d; }
+  .team-initials { display: grid; width: 56px; height: 56px; place-items: center; border: 1px solid #565b60; color: #e9e5df; background: #24272a; font: 600 1.4rem "Space Grotesk", sans-serif; }
+  .team-card__number { font-size: .7rem; letter-spacing: .14em; }
+  .team-card__body { display: flex; height: calc(100% - 56px); flex-direction: column; padding-top: 62px; }
+  .team-role { margin: 0 0 16px; }
+  .team-card h3 { margin: 0; font: 500 clamp(2rem, 4vw, 3.5rem)/.9 "Space Grotesk", sans-serif; letter-spacing: -.07em; }
+  .team-description { max-width: 470px; margin: 24px 0 28px; color: #a9abad; line-height: 1.55; }
+  .team-links { display: flex; flex-wrap: wrap; gap: 12px 22px; margin-top: auto; padding-top: 20px; border-top: 1px solid #303337; }
+  .team-links a { color: #f7f4ef; font-size: .76rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .team-links a span { color: #c87945; }
+  .team-links a:hover, .team-links a:focus-visible { color: #c87945; }
+  footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px 0 30px; color: #858a8d; border-top: 1px solid #2a2d30; font-size: .75rem; }
+  :focus-visible { outline: 2px solid #c87945; outline-offset: 4px; }
+  @keyframes blink { 50% { opacity: .25; } }
+  @media (max-width: 720px) {
+    .catalog-header, .catalog-grid, .team-section, footer { width: min(100% - 32px, 560px); }
+    .catalog-header { padding-bottom: 70px; }
+    .topline__topic { display: none; }
+    .topline__actions { gap: 14px; }
+    .masthead { display: block; margin-top: 110px; }
+    h1 { font-size: clamp(4.2rem, 21vw, 7rem); }
+    .intro { margin-top: 30px; }
+    .catalog-grid { display: block; padding-bottom: 82px; }
+    .catalog-card, .catalog-card--featured { min-height: 0; margin-bottom: 16px; }
+    .card-media { height: 260px; }
+    .team-section { padding-bottom: 84px; }
+    .team-heading { display: block; padding-bottom: 30px; }
+    .team-heading > p { margin-top: 26px; }
+    .team-grid { display: block; }
+    .team-card { min-height: 360px; margin-bottom: 16px; }
+    .team-card__body { padding-top: 48px; }
+    footer { display: block; }
+    footer span { display: block; margin-top: 8px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .catalog-card, .card-media img, .card-title-row span, .topline a, .working-media__cursor { transition: none; animation: none; }
+  }
+</style>

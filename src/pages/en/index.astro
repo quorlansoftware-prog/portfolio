@@ -1,10 +1,9 @@
 ---
+import PortfolioCatalog from '../../components/PortfolioCatalog.astro';
 import siteConfig from '../../content/site.json';
-const locale = 'en';
+
 const source = siteConfig.site.catalog;
-const catalog = { ...source, ...(source.translations?.[locale] ?? {}) };
-const cards = source.cards.map((card) => ({ ...card, ...(card.translations?.[locale] ?? {}) }));
-const pageUrl = (card) => card.externalHref ?? `${import.meta.env.BASE_URL}${locale}/${siteConfig.pages.find((page) => page.id === card.pageId)?.path ?? ''}`;
+const catalog = { ...source, ...(source.translations?.en ?? {}) };
 ---
 <!doctype html>
 <html lang="en">
@@ -14,57 +13,10 @@ const pageUrl = (card) => card.externalHref ?? `${import.meta.env.BASE_URL}${loc
     <meta name="description" content={catalog.description} />
     <title>{catalog.title} · Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   </head>
   <body>
-    <header class="catalog-header">
-      <div class="topline"><span>QS / 2026</span><span>Web design & development</span><a href={import.meta.env.BASE_URL} lang="es">ES</a></div>
-      <div class="masthead"><p class="eyebrow">Templates that sell services</p><h1>{catalog.title}<span>®</span></h1><p class="intro">{catalog.description}</p></div>
-    </header>
-    <main class="catalog-grid" aria-label="Portfolio demos">
-      {cards.map((card, index) => <a href={pageUrl(card)} target={card.externalHref ? '_blank' : undefined} rel={card.externalHref ? 'noreferrer' : undefined} class:list={['catalog-card', `card-${card.theme}`, { 'catalog-card--featured': card.featured }]}>
-        <div class="card-media"><img src={`${import.meta.env.BASE_URL}${card.image}`} alt={card.alt} loading={index ? 'lazy' : 'eager'} /><span class="card-index">0{index + 1}</span></div>
-        <div class="card-body"><p class="card-sector">{card.sector}</p><div class="card-title-row"><h2>{card.title}</h2><span aria-hidden="true">↗</span></div><p class="card-description">{card.description}</p><span class="card-cta">{card.button}</span></div>
-      </a>)}
-    </main>
-    <footer><span>{catalog.watermark}</span><span>Made for businesses with something to say.</span></footer>
+    <PortfolioCatalog locale="en" />
   </body>
 </html>
-<style>
-  :global(*) { box-sizing: border-box; }
-  :global(body) { margin: 0; min-width: 320px; color: #f7f4ef; background: #101112; font-family: "DM Sans", system-ui, sans-serif; }
-  .catalog-header, .catalog-grid, footer { width: min(1240px, calc(100% - 48px)); margin: 0 auto; }
-  .catalog-header { padding: 28px 0 90px; }
-  .topline { display: flex; justify-content: space-between; align-items: center; gap: 20px; color: #858a8d; font-size: .72rem; letter-spacing: .16em; text-transform: uppercase; }
-  .topline a { color: #f7f4ef; text-decoration: none; }
-  .masthead { display: grid; grid-template-columns: 1.2fr .8fr; gap: 48px; align-items: end; margin-top: clamp(80px, 15vw, 190px); }
-  .eyebrow, .card-sector { color: #c87945; font-size: .72rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
-  h1 { max-width: 800px; margin: 0; font: 600 clamp(4.5rem, 13vw, 11rem)/.8 "Space Grotesk", sans-serif; letter-spacing: -.1em; }
-  h1 span { color: #c87945; font-size: .25em; letter-spacing: 0; vertical-align: top; }
-  .intro { max-width: 300px; margin: 0 0 5px; color: #a9abad; font-size: 1.05rem; line-height: 1.4; }
-  .catalog-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 18px; padding-bottom: 110px; }
-  .catalog-card { display: flex; grid-column: span 6; flex-direction: column; min-height: 560px; overflow: hidden; color: inherit; text-decoration: none; background: #191b1d; border: 1px solid #2a2d30; transition: transform .5s cubic-bezier(.16,1,.3,1), border-color .3s; }
-  .catalog-card--featured { grid-column: 3 / span 8; }
-  .catalog-card:hover { transform: translateY(-8px); border-color: #73777b; }
-  .card-media { position: relative; height: 320px; overflow: hidden; background: #272a2c; }
-  .card-media::after { position: absolute; inset: 0; content: ""; background: linear-gradient(180deg, transparent 55%, rgba(16,17,18,.6)); }
-  .card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s cubic-bezier(.16,1,.3,1); }
-  .catalog-card:hover .card-media img { transform: scale(1.04); }
-  .card-index { position: absolute; z-index: 1; top: 18px; left: 20px; color: #fff; font: 600 1.1rem "Space Grotesk", sans-serif; }
-  .card-body { display: flex; flex: 1; flex-direction: column; padding: 26px 28px 30px; }
-  .card-sector { margin: 0 0 22px; color: #c87945; }
-  .card-title-row { display: flex; justify-content: space-between; gap: 15px; align-items: start; }
-  .card-title-row h2 { margin: 0; font: 500 clamp(2.3rem, 5vw, 4.6rem)/.86 "Space Grotesk", sans-serif; letter-spacing: -.08em; }
-  .card-title-row span { color: #c87945; font-size: 2rem; transition: transform .3s; }
-  .catalog-card:hover .card-title-row span { transform: translate(4px, -4px); }
-  .card-description { max-width: 500px; margin: 24px 0; color: #a9abad; line-height: 1.5; }
-  .card-cta { margin-top: auto; padding-top: 20px; border-top: 1px solid #303337; color: #f7f4ef; font-size: .78rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-  .card-pure .card-sector, .card-pure .card-title-row span { color: #c9827b; }
-  .card-forma .card-sector, .card-forma .card-title-row span { color: #cbf34a; }
-  .card-miga .card-sector, .card-miga .card-title-row span { color: #e63324; }
-  .card-reformas .card-sector, .card-reformas .card-title-row span { color: #54b8a9; }
-  .card-reformas .card-media img { object-position: center 58%; }
-  footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px 0 30px; color: #858a8d; border-top: 1px solid #2a2d30; font-size: .75rem; }
-  @media (max-width: 720px) { .catalog-header, .catalog-grid, footer { width: min(100% - 32px, 560px); } .catalog-header { padding-bottom: 70px; } .topline span:nth-child(2) { display: none; } .masthead { display: block; margin-top: 110px; } h1 { font-size: clamp(4.2rem, 21vw, 7rem); } .intro { margin-top: 30px; } .catalog-grid { display: block; } .catalog-card, .catalog-card--featured { min-height: 0; margin-bottom: 16px; } .card-media { height: 260px; } footer { display: block; } footer span { display: block; margin-top: 8px; } }
-  @media (prefers-reduced-motion: reduce) { .catalog-card, .card-media img, .card-title-row span { transition: none; } }
-</style>
