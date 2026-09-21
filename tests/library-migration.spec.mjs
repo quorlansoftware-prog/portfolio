@@ -19,6 +19,12 @@ test('the deploy workflow authenticates the private component source', async () 
   assert.match(workflow, /x-access-token:\$\{ASTRO_WEBCOMPONENTS_TOKEN\}@github\.com/);
 });
 
+test('the deploy workflow rewrites npm SSH fallbacks to authenticated HTTPS', async () => {
+  const workflow = await readFile(new URL('.github/workflows/deploy.yml', root), 'utf8');
+  assert.match(workflow, /insteadOf "ssh:\/\/git@github\.com\//);
+  assert.match(workflow, /insteadOf "git@github\.com:"/);
+});
+
 test('local section components and fixed theme composition have been removed', async () => {
   await assert.rejects(access(new URL('src/components/BarbershopPage.astro', root)));
   await assert.rejects(access(new URL('src/data/themes.ts', root)));

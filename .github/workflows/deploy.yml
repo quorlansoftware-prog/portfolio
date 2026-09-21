@@ -32,7 +32,9 @@ jobs:
             echo "::error::Missing ASTRO_WEBCOMPONENTS_TOKEN repository secret"
             exit 1
           fi
-          git config --local url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "https://github.com/"
+          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
+          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "git@github.com:"
       - name: Detect package manager
         id: detect-package-manager
         run: |
