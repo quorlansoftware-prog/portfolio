@@ -21,8 +21,6 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    env:
-      GIT_CONFIG_GLOBAL: ${{ runner.temp }}/portfolio-dependency.gitconfig
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,6 +34,8 @@ jobs:
             echo "::error::Missing ASTRO_WEBCOMPONENTS_TOKEN repository secret"
             exit 1
           fi
+          export GIT_CONFIG_GLOBAL="$RUNNER_TEMP/portfolio-dependency.gitconfig"
+          echo "GIT_CONFIG_GLOBAL=$GIT_CONFIG_GLOBAL" >> "$GITHUB_ENV"
           umask 077
           git config --global --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/quorlansoftware-prog/astro-web-components".insteadOf "https://github.com/quorlansoftware-prog/astro-web-components"
           git config --global --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/quorlansoftware-prog/astro-web-components".insteadOf "ssh://git@github.com/quorlansoftware-prog/astro-web-components"
