@@ -46,6 +46,7 @@ test('git dependencies use HTTPS transport in CI', () => {
 
   assert.match(dependency, /^git\+https:\/\//);
   assert.match(lockedDependency.resolved, /^git\+https:\/\//);
+  assert.equal(lockedDependency.resolved, dependency);
 });
 
 test('Spanish pages preserve their paths and English pages are generated under en', async () => {

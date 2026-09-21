@@ -1,5 +1,8 @@
 import assert from 'node:assert/strict';
-import { access, readFile } from 'node:fs/promises';
+import { access, readFile, mkdtemp, rm } from 'node:fs/promises';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 
 const root = new URL('../', import.meta.url);
@@ -15,14 +18,33 @@ test('the site consumes the pinned shared package and SiteRenderer', async () =>
 test('the deploy workflow authenticates the private component source', async () => {
   const workflow = await readFile(new URL('.github/workflows/deploy.yml', root), 'utf8');
   assert.match(workflow, /ASTRO_WEBCOMPONENTS_TOKEN/);
-  assert.match(workflow, /git config --local/);
+  assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /x-access-token:\$\{ASTRO_WEBCOMPONENTS_TOKEN\}@github\.com/);
 });
 
 test('the deploy workflow rewrites npm SSH fallbacks to authenticated HTTPS', async () => {
   const workflow = await readFile(new URL('.github/workflows/deploy.yml', root), 'utf8');
   assert.match(workflow, /insteadOf "ssh:\/\/git@github\.com\//);
-  assert.match(workflow, /insteadOf "git@github\.com:"/);
+  assert.match(workflow, /insteadOf "git@github\.com:/);
+});
+
+test('private dependency authentication works outside the checkout for npm temporary clones', async () => {
+  const workflow = await readFile(new URL('.github/workflows/deploy.yml', root), 'utf8');
+  const configLines = workflow.split('\n').filter((line) => line.trim().startsWith('git config '));
+  const directory = await mkdtemp(join(tmpdir(), 'portfolio-git-auth-'));
+  const env = { ...process.env, GIT_CONFIG_GLOBAL: join(directory, 'gitconfig'), GIT_CONFIG_NOSYSTEM: '1', ASTRO_WEBCOMPONENTS_TOKEN: 'test-token' };
+  try {
+    execFileSync('bash', ['-eu', '-c', configLines.join('\n')], { cwd: directory, env });
+    const repo = 'quorlansoftware-prog/astro-web-components.git';
+    for (const prefix of ['https://github.com/', 'ssh://git@github.com/', 'git@github.com:']) {
+      const resolved = execFileSync('git', ['ls-remote', '--get-url', prefix + repo], { cwd: directory, env, encoding: 'utf8' }).trim();
+      assert.equal(resolved, `https://x-access-token:test-token@github.com/${repo}`);
+    }
+    const unrelated = 'https://github.com/example/other.git';
+    assert.equal(execFileSync('git', ['ls-remote', '--get-url', unrelated], { cwd: directory, env, encoding: 'utf8' }).trim(), unrelated);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('local section components and fixed theme composition have been removed', async () => {

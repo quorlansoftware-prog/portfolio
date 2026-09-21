@@ -21,9 +21,13 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    env:
+      GIT_CONFIG_GLOBAL: ${{ runner.temp }}/portfolio-dependency.gitconfig
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Configure private package access
         env:
           ASTRO_WEBCOMPONENTS_TOKEN: ${{ secrets.ASTRO_WEBCOMPONENTS_TOKEN }}
@@ -32,9 +36,10 @@ jobs:
             echo "::error::Missing ASTRO_WEBCOMPONENTS_TOKEN repository secret"
             exit 1
           fi
-          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "https://github.com/"
-          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "ssh://git@github.com/"
-          git config --local --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "git@github.com:"
+          umask 077
+          git config --global --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/quorlansoftware-prog/astro-web-components".insteadOf "https://github.com/quorlansoftware-prog/astro-web-components"
+          git config --global --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/quorlansoftware-prog/astro-web-components".insteadOf "ssh://git@github.com/quorlansoftware-prog/astro-web-components"
+          git config --global --add url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/quorlansoftware-prog/astro-web-components".insteadOf "git@github.com:quorlansoftware-prog/astro-web-components"
       - name: Detect package manager
         id: detect-package-manager
         run: |
@@ -68,12 +73,16 @@ jobs:
         run: |
           ${{ steps.detect-package-manager.outputs.runner }} astro build
         working-directory: ${{ env.BUILD_PATH }}
+      - name: Remove private package credentials
+        if: always()
+        run: rm -f -- "$GIT_CONFIG_GLOBAL"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ env.BUILD_PATH }}/dist
 
   deploy:
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
