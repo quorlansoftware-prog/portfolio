@@ -6,10 +6,17 @@ const root = new URL('../', import.meta.url);
 
 test('the site consumes the pinned shared package and SiteRenderer', async () => {
   const pkg = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
-  assert.match(pkg.dependencies['@quorlansoftware/astro-web-components'], /^github:quorlansoftware-prog\/astro-web-components#[0-9a-f]{40}$/);
+  assert.match(pkg.dependencies['@quorlansoftware/astro-web-components'], /^git\+https:\/\/github\.com\/quorlansoftware-prog\/astro-web-components\.git#[0-9a-f]{40}$/);
   const page = await readFile(new URL('src/pages/bourbon/index.astro', root), 'utf8');
   assert.match(page, /astro-web-components\/SiteRenderer\.astro/);
   assert.match(page, /site\.json/);
+});
+
+test('the deploy workflow authenticates the private component source', async () => {
+  const workflow = await readFile(new URL('.github/workflows/deploy.yml', root), 'utf8');
+  assert.match(workflow, /ASTRO_WEBCOMPONENTS_TOKEN/);
+  assert.match(workflow, /git config --local/);
+  assert.match(workflow, /x-access-token:\$\{ASTRO_WEBCOMPONENTS_TOKEN\}@github\.com/);
 });
 
 test('local section components and fixed theme composition have been removed', async () => {

@@ -24,6 +24,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Configure private package access
+        env:
+          ASTRO_WEBCOMPONENTS_TOKEN: ${{ secrets.ASTRO_WEBCOMPONENTS_TOKEN }}
+        run: |
+          if [ -z "$ASTRO_WEBCOMPONENTS_TOKEN" ]; then
+            echo "::error::Missing ASTRO_WEBCOMPONENTS_TOKEN repository secret"
+            exit 1
+          fi
+          git config --local url."https://x-access-token:${ASTRO_WEBCOMPONENTS_TOKEN}@github.com/".insteadOf "https://github.com/"
       - name: Detect package manager
         id: detect-package-manager
         run: |

@@ -4,6 +4,8 @@ import { test } from 'node:test';
 
 const root = new URL('../', import.meta.url);
 const site = JSON.parse(await readFile(new URL('src/content/site.json', root), 'utf8'));
+const packageJson = JSON.parse(await readFile(new URL('package.json', root), 'utf8'));
+const packageLock = JSON.parse(await readFile(new URL('package-lock.json', root), 'utf8'));
 
 test('the portfolio is composed from one versioned JSON config', () => {
   assert.equal(site.schemaVersion, 1);
@@ -35,6 +37,15 @@ test('the portfolio is composed from one versioned JSON config', () => {
     assert.ok(page.metadata.translations.en.title);
     assert.ok(page.sections.every((block) => block.translations?.en));
   }
+});
+
+test('git dependencies use HTTPS transport in CI', () => {
+  const dependencyName = '@quorlansoftware/astro-web-components';
+  const dependency = packageJson.dependencies[dependencyName];
+  const lockedDependency = packageLock.packages[`node_modules/${dependencyName}`];
+
+  assert.match(dependency, /^git\+https:\/\//);
+  assert.match(lockedDependency.resolved, /^git\+https:\/\//);
 });
 
 test('Spanish pages preserve their paths and English pages are generated under en', async () => {
